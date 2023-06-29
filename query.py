@@ -22,7 +22,6 @@ app.secret_key = 'tester'
 def index():
   return print_index_table()
 
-
 @app.route('/test')
 def test_api_request():
     if 'credentials' not in flask.session:
