@@ -8,7 +8,7 @@ import google.oauth2.credentials
 import google_auth_oauthlib.flow
 import googleapiclient.discovery
 
-CLIENT_SECRETS_FILE = "client_secret_gsc.json"
+CLIENT_SECRETS_FILE = "client_secret.json"
 
 SCOPES = ['https://www.googleapis.com/auth/webmasters.readonly']
 API_SERVICE_NAME = 'searchconsole'
@@ -136,15 +136,6 @@ def print_index_table():
           '<td>Go directly to the authorization flow. If there are stored ' +
           '    credentials, you still might not be prompted to reauthorize ' +
           '    the application.</td></tr>' +
-          '<tr><td><a href="/revoke">Revoke current credentials</a></td>' +
-          '<td>Revoke the access token associated with the current user ' +
-          '    session. After revoking credentials, if you go to the test ' +
-          '    page, you should see an <code>invalid_grant</code> error.' +
-          '</td></tr>' +
-          '<tr><td><a href="/clear">Clear Flask session credentials</a></td>' +
-          '<td>Clear the access token currently stored in the user session. ' +
-          '    After clearing the token, if you <a href="/test">test the ' +
-          '    API request</a> again, you should go back to the auth flow.' +
           '</td></tr></table>')
 
 
