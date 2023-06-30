@@ -4,7 +4,7 @@ from google.oauth2 import credentials
 from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
 
-CLIENT_SECRETS_FILE = "client_secret.json"
+CLIENT_SECRETS_FILE = "client_secret1.json"
 API_SERVICE_NAME = 'searchconsole'
 API_VERSION = 'v1'
 

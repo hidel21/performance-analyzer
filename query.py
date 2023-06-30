@@ -8,7 +8,7 @@ import google.oauth2.credentials
 import google_auth_oauthlib.flow
 import googleapiclient.discovery
 
-CLIENT_SECRETS_FILE = "client_secret.json"
+CLIENT_SECRETS_FILE = "client_secret1.json"
 
 SCOPES = ['https://www.googleapis.com/auth/webmasters.readonly']
 API_SERVICE_NAME = 'searchconsole'
