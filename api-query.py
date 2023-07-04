@@ -4,7 +4,7 @@ from google.oauth2 import credentials
 from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
 
-CLIENT_SECRETS_FILE = "client_secret1.json"
+CLIENT_SECRETS_FILE = "client_secret.json"
 API_SERVICE_NAME = 'searchconsole'
 API_VERSION = 'v1'
 
@@ -28,9 +28,9 @@ def obtener_datos_rendimiento(sitio_web):
     search_console_service = build(API_SERVICE_NAME, API_VERSION, credentials=cred)
 
     request_body = {
-        'startDate': 'yyyy-mm-dd',  # Fecha de inicio para la consulta
-        'endDate': 'yyyy-mm-dd',    # Fecha de fin para la consulta
-        'dimensions': ['date'],     # Dimensiones para la consulta (por ejemplo, fecha)
+        'startDate': '2023-04-01',  # Fecha de inicio para la consulta
+        'endDate': '2023-05-01',    # Fecha de fin para la consulta
+        'dimensions': ['page'],     # Dimensiones para la consulta (por ejemplo, fecha)
         'searchType': 'web',        # Tipo de búsqueda (web, image, video, etc.)
         'rowLimit': 10              # Límite de filas de resultados
     }
