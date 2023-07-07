@@ -84,9 +84,10 @@ def main():
         ## Obtención de Datos de Rendimiento ##
         """)
 
-        start_date = st.date_input('Fecha de inicio', value=pd.to_datetime('2022-02-19'))
-        end_date = st.date_input('Fecha de fin', value=pd.to_datetime('2023-05-30'))
-        url = st.text_input('Ingresa la URL del sitio web', value='https://pintuco.com.co/')
+        # Los valores por defecto han sido sustituidos por otras fechas y una URL diferente
+        start_date = st.date_input('Fecha de inicio', value=pd.to_datetime('2023-01-01'))
+        end_date = st.date_input('Fecha de fin', value=pd.to_datetime('2023-06-30'))
+        url = st.text_input('Ingresa la URL del sitio web', value='https://otrodominio.com/')
 
         if st.button("Obtener Datos"):
             datos_rendimiento = obtener_datos_rendimiento(servicio, start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d'), url)
