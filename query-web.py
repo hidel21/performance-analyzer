@@ -9,6 +9,9 @@ from nltk.corpus import stopwords
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 import nltk
+from io import BytesIO
+
+
 
 nltk.download('stopwords')
 
@@ -64,42 +67,48 @@ def obtener_palabras_clave(url):
     return palabras_clave
 
 def exportar_consulta_base(datos_rendimiento):
-        # Obtener los datos de la consulta base
+    # Obtener los datos de la consulta base
     filas = datos_rendimiento['rows']
-    datos_base = []
-    urls = []
+    datos_base = pd.DataFrame(filas)  # Convertir 'filas' en un DataFrame
+
+    # Guarda el DataFrame a un archivo de Excel en memoria
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        datos_base.to_excel(writer)
+    output.seek(0)
 
 def main():
     st.title("Análisis de rendimiento de página web")
+    st.write(""" ## Autenticación ## """)
 
-    st.write("""
-    ## Autenticación ##
-    """)
-
-    if st.button("Autenticar"):
-        servicio = autenticar()
+    if "servicio" not in st.session_state or st.button("Autenticar"):
+        st.session_state.servicio = autenticar()
         st.success('Autenticación realizada exitosamente!')
 
-        st.write("""
-        ## Obtención de Datos de Rendimiento ##
-        """)
+    st.write(""" ## Obtención de Datos de Rendimiento ## """)
 
-        # Los valores por defecto han sido sustituidos por otras fechas y una URL diferente
-        start_date = st.date_input('Fecha de inicio', value=pd.to_datetime('2023-01-01'))
-        end_date = st.date_input('Fecha de fin', value=pd.to_datetime('2023-06-30'))
-        url = st.text_input('Ingresa la URL del sitio web', value='https://otrodominio.com/')
+    # Los valores por defecto han sido sustituidos por otras fechas y una URL diferente
+    start_date = st.date_input('Fecha de inicio', value=pd.to_datetime('2023-01-01'))
+    end_date = st.date_input('Fecha de fin', value=pd.to_datetime('2023-06-30'))
+    url = st.text_input('Ingresa la URL del sitio web', value='https://www.example.com')
 
-        if st.button("Obtener Datos"):
-            datos_rendimiento = obtener_datos_rendimiento(servicio, start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d'), url)
-            st.success('Datos de rendimiento obtenidos exitosamente!')
+    if "datos_rendimiento" not in st.session_state or st.button("Obtener Datos"):
+        st.session_state.datos_rendimiento = obtener_datos_rendimiento(st.session_state.servicio, start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d'), url)
+        st.success('Datos de rendimiento obtenidos exitosamente!')
 
-            st.write("""
-            ## Exportar Consulta Base ##
-            """)
+    st.write(""" ## Exportar Consulta Base ## """)
 
-            if st.button("Exportar Consulta"):
-                exportar_consulta_base(datos_rendimiento)
-                st.success('Consulta base exportada exitosamente!')
+    if st.button("Exportar Consulta"):
+        output = exportar_consulta_base(st.session_state.datos_rendimiento)
+        st.success('Consulta base exportada exitosamente!')
+
+        # Crea un botón de descarga para el archivo de Excel
+        st.download_button(
+            label="Descargar archivo de Excel",
+            data=output,
+            file_name='consulta_base.xlsx',
+            mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
 
 if __name__ == "__main__":
     main()
