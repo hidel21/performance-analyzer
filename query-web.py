@@ -1,7 +1,7 @@
+import streamlit as st
 import pandas as pd
 import pickle
 import os
-import streamlit as st
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
@@ -9,9 +9,6 @@ from nltk.corpus import stopwords
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 import nltk
-from io import BytesIO
-
-
 
 nltk.download('stopwords')
 
@@ -19,10 +16,14 @@ SCOPES = ['https://www.googleapis.com/auth/webmasters.readonly']
 CREDENTIALS_FILE = 'client_secret_key.json'
 URI_REDIRECCIONAMIENTO = 'http://localhost:55875/'
 
+
+# Función para guardar las credenciales en un archivo pickle
 def guardar_credenciales(credenciales):
     with open('credenciales.pickle', 'wb') as f:
         pickle.dump(credenciales, f)
 
+
+# Función para cargar las credenciales desde un archivo pickle
 def cargar_credenciales():
     try:
         with open('credenciales.pickle', 'rb') as f:
@@ -30,6 +31,8 @@ def cargar_credenciales():
     except FileNotFoundError:
         return None
 
+
+# Función para autenticar o cargar las credenciales
 def autenticar():
     credenciales = cargar_credenciales()
 
@@ -42,12 +45,13 @@ def autenticar():
         guardar_credenciales(credenciales)
         return build('webmasters', 'v3', credentials=credenciales)
 
-def obtener_datos_rendimiento(servicio, start_date, end_date, url):
+
+def obtener_datos_rendimiento(servicio, dominio, fecha_inicio, fecha_fin):
     return servicio.searchanalytics().query(
-        siteUrl=url,
+        siteUrl=dominio,
         body={
-            'startDate': start_date,
-            'endDate': end_date,
+            'startDate': fecha_inicio,
+            'endDate': fecha_fin,
             'dimensions': ['page'],
             'dimensionFilterGroups': [{
                 'filters': [{
@@ -61,54 +65,54 @@ def obtener_datos_rendimiento(servicio, start_date, end_date, url):
         }
     ).execute()
 
+
 def obtener_palabras_clave(url):
+    # Eliminar stopwords
     stop_words = set(stopwords.words('spanish'))
+
+    # Obtener las palabras clave de la URL
     palabras_clave = [word for word in url.split('/') if word.lower() not in stop_words]
+
     return palabras_clave
 
-def exportar_consulta_base(datos_rendimiento):
-    # Obtener los datos de la consulta base
-    filas = datos_rendimiento['rows']
-    datos_base = pd.DataFrame(filas)  # Convertir 'filas' en un DataFrame
 
-    # Guarda el DataFrame a un archivo de Excel en memoria
-    output = BytesIO()
-    with pd.ExcelWriter(output, engine='openpyxl') as writer:
-        datos_base.to_excel(writer)
-    output.seek(0)
+# Exportar los datos a un archivo CSV descargable
+def exportar_a_csv(datos, dominio):
+    df = pd.DataFrame(datos)
+    nombre_archivo = f"scrapping_{dominio}.csv"
+    df.to_csv(nombre_archivo, index=False)
+    return nombre_archivo
 
+
+# Interfaz de usuario con Streamlit
 def main():
-    st.title("Análisis de rendimiento de página web")
-    st.write(""" ## Autenticación ## """)
+    # Título y descripción de la aplicación
+    st.title("Análisis de rendimiento en Google Search Console")
+    st.write("Esta aplicación realiza un análisis de rendimiento basado en datos de Google Search Console.")
 
-    if "servicio" not in st.session_state or st.button("Autenticar"):
-        st.session_state.servicio = autenticar()
-        st.success('Autenticación realizada exitosamente!')
+    # Autenticación y obtención de datos
+    servicio = autenticar()
 
-    st.write(""" ## Obtención de Datos de Rendimiento ## """)
+    # Campo de entrada para el dominio
+    dominio = st.text_input("Ingrese el dominio que desea consultar en Google Search Console (ejemplo: example.com)")
 
-    # Los valores por defecto han sido sustituidos por otras fechas y una URL diferente
-    start_date = st.date_input('Fecha de inicio', value=pd.to_datetime('2023-01-01'))
-    end_date = st.date_input('Fecha de fin', value=pd.to_datetime('2023-06-30'))
-    url = st.text_input('Ingresa la URL del sitio web', value='https://www.example.com')
+    # Selección de fechas
+    st.header("Seleccione el rango de fechas")
+    fecha_inicio = st.date_input("Fecha de inicio")
+    fecha_fin = st.date_input("Fecha de fin")
 
-    if "datos_rendimiento" not in st.session_state or st.button("Obtener Datos"):
-        st.session_state.datos_rendimiento = obtener_datos_rendimiento(st.session_state.servicio, start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d'), url)
-        st.success('Datos de rendimiento obtenidos exitosamente!')
+    # Botón para obtener los datos
+    if st.button("Obtener datos"):
+        datos_rendimiento = obtener_datos_rendimiento(servicio, dominio, str(fecha_inicio), str(fecha_fin))
+        archivo_csv = exportar_a_csv(datos_rendimiento['rows'], dominio)
+        st.success("Datos obtenidos y exportados correctamente.")
 
-    st.write(""" ## Exportar Consulta Base ## """)
+        # Enlace para descargar el archivo CSV
+        st.markdown(f"Descargar archivo CSV: [Descargar {archivo_csv}](./{archivo_csv})")
 
-    if st.button("Exportar Consulta"):
-        output = exportar_consulta_base(st.session_state.datos_rendimiento)
-        st.success('Consulta base exportada exitosamente!')
-
-        # Crea un botón de descarga para el archivo de Excel
-        st.download_button(
-            label="Descargar archivo de Excel",
-            data=output,
-            file_name='consulta_base.xlsx',
-            mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-        )
+    # Información adicional
+    st.header("Información adicional")
+    st.write("Puedes encontrar los datos exportados en el archivo CSV descargable.")
 
 if __name__ == "__main__":
     main()
