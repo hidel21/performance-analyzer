@@ -14,7 +14,11 @@ nltk.download('stopwords')
 
 SCOPES = ['https://www.googleapis.com/auth/webmasters.readonly']
 CREDENTIALS_FILE = 'client_secret_key.json'
-URI_REDIRECCIONAMIENTO = 'https://query-ana.streamlit.app/'
+URI_REDIRECCIONAMIENTO = [
+    'http://localhost:8501/',
+    'https://query-ana.streamlit.app/'
+     ]
+
 
 
 # Función para guardar las credenciales en un archivo pickle
@@ -40,8 +44,9 @@ def autenticar():
         return build('webmasters', 'v3', credentials=credenciales)
     else:
         flow = InstalledAppFlow.from_client_secrets_file(CREDENTIALS_FILE, SCOPES,
-                                                         redirect_uri=URI_REDIRECCIONAMIENTO)
+                                                 redirect_uri=URI_REDIRECCIONAMIENTO)
         credenciales = flow.run_local_server(port=55875)
+
         guardar_credenciales(credenciales)
         return build('webmasters', 'v3', credentials=credenciales)
 
@@ -111,18 +116,19 @@ def main():
 
     archivo_csv = None  # Inicializar la variable con un valor predeterminado
 
-    # Botón para obtener los datos
+     # Botón para obtener los datos
+     # Botón para obtener los datos
     if st.button("Obtener datos"):
         datos_rendimiento = obtener_datos_rendimiento(servicio, dominio, [str(fecha_inicio), str(fecha_fin)])
 
         if datos_rendimiento and 'rows' in datos_rendimiento:
             archivo_csv = exportar_a_csv(datos_rendimiento['rows'], dominio)
             st.success("Datos obtenidos y exportados correctamente.")
-
-    # Verificar si archivo_csv tiene un valor antes de usarlo
-    if archivo_csv is not None:
-        st.markdown(f"Descargar archivo CSV: [Descargar {archivo_csv}](./{archivo_csv})")
-
+            
+            # Descargar automáticamente el archivo CSV
+            if archivo_csv is not None:
+                st.download_button(label="Descargar CSV", data=archivo_csv, file_name=archivo_csv)
+    
 
 
 if __name__ == "__main__":
