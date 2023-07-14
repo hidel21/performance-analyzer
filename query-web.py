@@ -86,11 +86,18 @@ def exportar_a_csv(datos, dominio):
     if datos:
         df = pd.DataFrame(datos)
         nombre_archivo = f"scrapping_{dominio}.csv"
-        df.to_csv(nombre_archivo, index=False)
-        return nombre_archivo
+        
+        # Crear el directorio si no existe
+        os.makedirs("csv_files", exist_ok=True)
+        
+        archivo_csv = os.path.join("csv_files", nombre_archivo)
+        
+        df.to_csv(archivo_csv, index=False)
+        return archivo_csv
     else:
         return None
 
+        
 def buscar_sitio(servicio):
     sitios = servicio.sites().list().execute()
     return sitios['siteEntry']
