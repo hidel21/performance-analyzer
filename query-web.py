@@ -46,12 +46,12 @@ def autenticar():
         return build('webmasters', 'v3', credentials=credenciales)
 
 
-def obtener_datos_rendimiento(servicio, dominio, fecha_inicio, fecha_fin):
+def obtener_datos_rendimiento(servicio, dominio, rango_fechas):
     return servicio.searchanalytics().query(
         siteUrl=dominio,
         body={
-            'startDate': fecha_inicio,
-            'endDate': fecha_fin,
+            'startDate': rango_fechas[0],
+            'endDate': rango_fechas[1],
             'dimensions': ['page'],
             'dimensionFilterGroups': [{
                 'filters': [{
@@ -78,13 +78,19 @@ def obtener_palabras_clave(url):
 
 # Exportar los datos a un archivo CSV descargable
 def exportar_a_csv(datos, dominio):
-    df = pd.DataFrame(datos)
-    nombre_archivo = f"scrapping_{dominio}.csv"
-    df.to_csv(nombre_archivo, index=False)
-    return nombre_archivo
+    if datos:
+        df = pd.DataFrame(datos)
+        nombre_archivo = f"scrapping_{dominio}.csv"
+        df.to_csv(nombre_archivo, index=False)
+        return nombre_archivo
+    else:
+        return None
+
+def buscar_sitio(servicio):
+    sitios = servicio.sites().list().execute()
+    return sitios['siteEntry']
 
 
-# Interfaz de usuario con Streamlit
 def main():
     # Título y descripción de la aplicación
     st.title("Análisis de rendimiento en Google Search Console")
@@ -93,26 +99,31 @@ def main():
     # Autenticación y obtención de datos
     servicio = autenticar()
 
-    # Campo de entrada para el dominio
-    dominio = st.text_input("Ingrese el dominio que desea consultar en Google Search Console (ejemplo: example.com)")
+    # Campo de búsqueda del sitio web
+    st.header("Buscar sitio web")
+    sitio_seleccionado = st.selectbox("Seleccione un sitio web", buscar_sitio(servicio))
+    dominio = sitio_seleccionado['siteUrl']
 
     # Selección de fechas
     st.header("Seleccione el rango de fechas")
     fecha_inicio = st.date_input("Fecha de inicio")
     fecha_fin = st.date_input("Fecha de fin")
 
+    archivo_csv = None  # Inicializar la variable con un valor predeterminado
+
     # Botón para obtener los datos
     if st.button("Obtener datos"):
-        datos_rendimiento = obtener_datos_rendimiento(servicio, dominio, str(fecha_inicio), str(fecha_fin))
-        archivo_csv = exportar_a_csv(datos_rendimiento['rows'], dominio)
-        st.success("Datos obtenidos y exportados correctamente.")
+        datos_rendimiento = obtener_datos_rendimiento(servicio, dominio, [str(fecha_inicio), str(fecha_fin)])
 
-        # Enlace para descargar el archivo CSV
+        if datos_rendimiento and 'rows' in datos_rendimiento:
+            archivo_csv = exportar_a_csv(datos_rendimiento['rows'], dominio)
+            st.success("Datos obtenidos y exportados correctamente.")
+
+    # Verificar si archivo_csv tiene un valor antes de usarlo
+    if archivo_csv is not None:
         st.markdown(f"Descargar archivo CSV: [Descargar {archivo_csv}](./{archivo_csv})")
 
-    # Información adicional
-    st.header("Información adicional")
-    st.write("Puedes encontrar los datos exportados en el archivo CSV descargable.")
+
 
 if __name__ == "__main__":
     main()
