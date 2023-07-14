@@ -9,6 +9,8 @@ from nltk.corpus import stopwords
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 import nltk
+import base64
+
 
 nltk.download('stopwords')
 
@@ -87,17 +89,23 @@ def exportar_a_csv(datos, dominio):
         df = pd.DataFrame(datos)
         nombre_archivo = f"scrapping_{dominio}.csv"
         
-        # Crear el directorio si no existe
-        os.makedirs("csv_files", exist_ok=True)
-        
-        archivo_csv = os.path.join("csv_files", nombre_archivo)
+        archivo_csv = os.path.join(".", nombre_archivo)
         
         df.to_csv(archivo_csv, index=False)
-        return archivo_csv
+        
+        # Leer el archivo CSV como bytes
+        with open(archivo_csv, "rb") as f:
+            csv_bytes = f.read()
+        
+        # Generar el enlace de descarga
+        b64 = base64.b64encode(csv_bytes).decode()
+        href = f'<a href="data:file/csv;base64,{b64}" download="{nombre_archivo}">Descargar CSV</a>'
+        
+        return href
     else:
         return None
 
-        
+
 def buscar_sitio(servicio):
     sitios = servicio.sites().list().execute()
     return sitios['siteEntry']
@@ -123,18 +131,18 @@ def main():
 
     archivo_csv = None  # Inicializar la variable con un valor predeterminado
 
-     # Botón para obtener los datos
-     # Botón para obtener los datos
+       # Botón para obtener los datos
     if st.button("Obtener datos"):
         datos_rendimiento = obtener_datos_rendimiento(servicio, dominio, [str(fecha_inicio), str(fecha_fin)])
 
         if datos_rendimiento and 'rows' in datos_rendimiento:
             archivo_csv = exportar_a_csv(datos_rendimiento['rows'], dominio)
-            st.success("Datos obtenidos y exportados correctamente.")
+            st.success("Datos obtenidos correctamente.")
             
-            # Descargar automáticamente el archivo CSV
             if archivo_csv is not None:
-                st.download_button(label="Descargar CSV", data=archivo_csv, file_name=archivo_csv)
+                st.markdown(archivo_csv, unsafe_allow_html=True)
+        else:
+            st.error("No se encontraron datos en la respuesta de la API.")
     
 
 
