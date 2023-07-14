@@ -14,7 +14,7 @@ nltk.download('stopwords')
 
 SCOPES = ['https://www.googleapis.com/auth/webmasters.readonly']
 CREDENTIALS_FILE = 'client_secret_key.json'
-URI_REDIRECCIONAMIENTO = 'http://localhost:55875/'
+URI_REDIRECCIONAMIENTO = 'https://query-ana.streamlit.app/'
 
 
 # Función para guardar las credenciales en un archivo pickle
